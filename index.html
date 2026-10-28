@@ -12,7 +12,7 @@ button,input{font:inherit}button{cursor:pointer;border:0}
 .app{width:min(1000px,100% - 32px);margin:0 auto;padding:34px 0 48px}
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px}.brand{display:flex;gap:12px;align-items:center;font-weight:750;font-size:20px;letter-spacing:.02em}.logo{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#7166d9);color:#171522;font-size:22px}
 .eyebrow{color:var(--muted);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
-.header-actions{display:flex;gap:8px}.icon-btn,.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 13px}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.icon-btn,.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 13px}
 main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(270px,.7fr);gap:20px}
 .card{background:linear-gradient(160deg,rgba(31,33,49,.96),rgba(22,24,35,.96));border:1px solid var(--border);border-radius:24px;padding:24px;box-shadow:0 18px 60px #0002}
 .timer-card{text-align:center;display:flex;flex-direction:column;align-items:center}
@@ -33,6 +33,7 @@ main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(270px,.7fr);gap:2
 footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:22px;color:#777c94;font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#e8e4ff;color:#1a1730;padding:12px 18px;border-radius:13px;box-shadow:0 10px 40px #0005;transition:.25s;z-index:5;font-weight:650}.toast.show{opacity:1;transform:translate(-50%,0)}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:480px){.header-actions{gap:5px}.icon-btn{padding:8px 9px;font-size:12px}.brand{gap:8px}.logo{width:36px;height:36px}}
 @media(max-width:760px){.app{padding-top:20px}main{grid-template-columns:1fr}.card{padding:20px}.side{display:grid;grid-template-columns:1fr}.ring{width:min(280px,70vw)}header{margin-bottom:20px}.brand{font-size:18px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -40,8 +41,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 <body>
 <div class="app">
   <header>
-    <div class="brand"><div class="logo">✦</div><div>Focus<div class="eyebrow">make time count</div></div></div>
-    <div class="header-actions"><button class="icon-btn" id="soundBtn" aria-pressed="true" title="通知音の切り替え">🔔 音 ON</button><button class="icon-btn" id="themeBtn" title="アクセントカラー切り替え">◐</button></div>
+    <div class="brand"><div class="logo">✦</div><div>Focus<div class="eyebrow" id="eyebrow">make time count</div></div></div>
+    <div class="header-actions"><button class="icon-btn" id="langBtn" type="button" aria-label="Switch language">日本語 / EN</button><button class="icon-btn" id="soundBtn" aria-pressed="true" title="通知音の切り替え">🔔 音 ON</button><button class="icon-btn" id="themeBtn" title="アクセントカラー切り替え">◐</button></div>
   </header>
   <main>
     <section class="card timer-card" aria-label="集中タイマー">
@@ -59,37 +60,123 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     </section>
     <aside class="side">
       <section class="card">
-        <h2 class="section-title">今日の記録 <small id="todayLabel"></small></h2>
+        <h2 class="section-title"><span id="todayHeadingText">今日の記録</span> <small id="todayLabel"></small></h2>
         <div class="stats">
-          <div class="stat"><div class="stat-label">集中した時間</div><div class="stat-value" id="totalTime">0<span>分</span></div></div>
-          <div class="stat"><div class="stat-label">完了セッション</div><div class="stat-value" id="sessions">0<span>回</span></div></div>
+          <div class="stat"><div class="stat-label" id="focusTimeLabel">集中した時間</div><div class="stat-value" id="totalTime">0<span>分</span></div></div>
+          <div class="stat"><div class="stat-label" id="sessionsLabel">完了セッション</div><div class="stat-value" id="sessions">0<span>回</span></div></div>
         </div>
-        <div class="goal-row"><span>今日の目標</span><span id="goalLabel">120 / 120 分</span></div>
+        <div class="goal-row"><span id="goalTitle">今日の目標</span><span id="goalLabel">120 / 120 分</span></div>
         <div class="bar"><div class="bar-fill" id="goalBar"></div></div>
       </section>
       <section class="card">
-        <h2 class="section-title">タイマー設定 <small>分単位</small></h2>
+        <h2 class="section-title"><span id="settingsHeadingText">タイマー設定</span> <small id="perMinuteLabel">分単位</small></h2>
         <div class="settings-grid">
-          <div class="field"><label for="focusMins">集中時間</label><input id="focusMins" type="number" min="1" max="180" value="25"></div>
-          <div class="field"><label for="shortMins">短い休憩</label><input id="shortMins" type="number" min="1" max="60" value="5"></div>
-          <div class="field"><label for="longMins">長い休憩</label><input id="longMins" type="number" min="1" max="90" value="15"></div>
-          <div class="field"><label for="goalMins">1日の目標（分）</label><input id="goalMins" type="number" min="10" max="1440" value="120"></div>
+          <div class="field"><label for="focusMins" id="focusLabel">集中時間</label><input id="focusMins" type="number" min="1" max="180" value="25"></div>
+          <div class="field"><label for="shortMins" id="shortLabel">短い休憩</label><input id="shortMins" type="number" min="1" max="60" value="5"></div>
+          <div class="field"><label for="longMins" id="longLabel">長い休憩</label><input id="longMins" type="number" min="1" max="90" value="15"></div>
+          <div class="field"><label for="goalMins" id="dailyGoalLabel">1日の目標（分）</label><input id="goalMins" type="number" min="10" max="1440" value="120"></div>
         </div>
         <div class="settings-actions"><button class="secondary" id="saveSettings">設定を保存</button></div>
       </section>
       <section class="card">
-        <h2 class="section-title">今やること <small>任意</small></h2>
+        <h2 class="section-title"><span id="taskHeadingText">今やること</span> <small id="optionalLabel">任意</small></h2>
         <div class="tasks"><input id="taskInput" maxlength="100" placeholder="例：情報技術検定の勉強" aria-label="今やること"><button id="saveTask">保存</button></div>
         <div class="task-current" id="taskCurrent">やることを決めると集中しやすいよ。</div>
       </section>
     </aside>
   </main>
-  <footer><span>Focus Timer · 記録はこのブラウザ内に保存されます</span><button class="icon-btn" id="clearStats" style="padding:5px 9px;font-size:11px">今日の記録をリセット</button></footer>
+  <footer><span id="footerText">Focus Timer · 記録はこのブラウザ内に保存されます</span><button class="icon-btn" id="clearStats" style="padding:5px 9px;font-size:11px">今日の記録をリセット</button></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
+
+  const translations = {
+    ja: {
+      title:'Focus — 集中タイマー', soundTitle:'通知音の切り替え', themeTitle:'アクセントカラー切り替え',
+      focus:'集中', short:'短い休憩', long:'長い休憩', ready:'準備ができたら始めよう',
+      running:'集中中…', complete:'セッション完了！', start:'▶ スタート', resume:'▶ 再開',
+      pause:'Ⅱ 一時停止', reset:'↺ リセット', skip:'次へ ↗',
+      focusCaption:'FOCUS SESSION', shortCaption:'SHORT BREAK', longCaption:'LONG BREAK',
+      sessionFocus:'集中したら、休憩も忘れずに。', sessionShort:'少し体を伸ばしてリフレッシュしよう。',
+      sessionLong:'長めに休んで、頭をリセットしよう。', today:'今日の記録',
+      focusTime:'集中した時間', sessions:'完了セッション', goal:'今日の目標', minutes:'分', times:'回',
+      settings:'タイマー設定', perMinute:'分単位', focusDuration:'集中時間', shortBreak:'短い休憩',
+      longBreak:'長い休憩', dailyGoal:'1日の目標（分）', saveSettings:'設定を保存',
+      currentTask:'今やること', optional:'任意', taskPlaceholder:'例：情報技術検定の勉強',
+      save:'保存', taskHint:'やることを決めると集中しやすいよ。',
+      footer:'Focus Timer · 記録はこのブラウザ内に保存されます',
+      clearStats:'今日の記録をリセット', soundOn:'🔔 音 ON', soundOff:'🔕 音 OFF',
+      ended:'が終了！', switched:'に切り替えたよ', paused:'一時停止したよ',
+      timerReset:'タイマーをリセットしたよ', settingsSaved:'設定を保存したよ',
+      taskSaved:'やることを保存したよ', taskCleared:'やることをクリアしたよ',
+      statsReset:'今日の記録をリセットしたよ', congrats:'おつかれさま！休憩を取ろう。',
+      breakDone:'休憩終了。準備ができたら次の集中へ。',
+      confirmClear:'今日の集中時間とセッション数をリセットする？', language:'日本語 / EN'
+    },
+    en: {
+      title:'Focus — Focus Timer', soundTitle:'Toggle notification sound', themeTitle:'Switch accent color',
+      focus:'Focus', short:'Short Break', long:'Long Break', ready:'Ready when you are',
+      running:'Focus in progress…', complete:'Session complete!', start:'▶ Start', resume:'▶ Resume',
+      pause:'Ⅱ Pause', reset:'↺ Reset', skip:'Skip ↗',
+      focusCaption:'FOCUS SESSION', shortCaption:'SHORT BREAK', longCaption:'LONG BREAK',
+      sessionFocus:'Stay focused, and remember to take breaks.', sessionShort:'Stretch a little and refresh your mind.',
+      sessionLong:'Take a longer break and reset your mind.', today:"Today's Stats",
+      focusTime:'Focus Time', sessions:'Sessions Completed', goal:"Today's Goal", minutes:'min', times:'sessions',
+      settings:'Timer Settings', perMinute:'in minutes', focusDuration:'Focus Duration', shortBreak:'Short Break',
+      longBreak:'Long Break', dailyGoal:'Daily Goal (min)', saveSettings:'Save Settings',
+      currentTask:'Current Task', optional:'Optional', taskPlaceholder:'e.g. Study for an IT exam',
+      save:'Save', taskHint:'Choose a task to make focusing easier.',
+      footer:'Focus Timer · Your data is saved in this browser',
+      clearStats:"Reset Today's Stats", soundOn:'🔔 Sound ON', soundOff:'🔕 Sound OFF',
+      ended:' finished!', switched:' selected', paused:'Paused',
+      timerReset:'Timer reset', settingsSaved:'Settings saved', taskSaved:'Task saved',
+      taskCleared:'Task cleared', statsReset:"Today's stats have been reset",
+      congrats:'Great work! Take a break.', breakDone:'Break finished. Start your next focus session when ready.',
+      confirmClear:"Reset today's focus time and completed sessions?", language:'EN / 日本語'
+    }
+  };
+  let language = (() => {
+    try {
+      const saved = localStorage.getItem('focusTimerLanguage');
+      if (saved === 'ja' || saved === 'en') return saved;
+    } catch(e) {}
+    return (navigator.language || '').toLowerCase().startsWith('ja') ? 'ja' : 'en';
+  })();
+  const t = key => translations[language][key] || translations.ja[key] || key;
+  function applyLanguage() {
+    document.documentElement.lang = language;
+    document.title = t('title');
+    $('eyebrow').textContent = 'make time count';
+    $('resetBtn').textContent = t('reset');
+    $('skipBtn').textContent = t('skip');
+    $('todayHeadingText').textContent = t('today');
+    $('focusTimeLabel').textContent = t('focusTime');
+    $('sessionsLabel').textContent = t('sessions');
+    $('goalTitle').textContent = t('goal');
+    $('settingsHeadingText').textContent = t('settings');
+    $('perMinuteLabel').textContent = t('perMinute');
+    $('focusLabel').textContent = t('focusDuration');
+    $('shortLabel').textContent = t('shortBreak');
+    $('longLabel').textContent = t('longBreak');
+    $('dailyGoalLabel').textContent = t('dailyGoal');
+    $('saveSettings').textContent = t('saveSettings');
+    $('taskHeadingText').textContent = t('currentTask');
+    $('optionalLabel').textContent = t('optional');
+    $('taskInput').placeholder = t('taskPlaceholder');
+    $('taskInput').setAttribute('aria-label', t('currentTask'));
+    $('saveTask').textContent = t('save');
+    $('footerText').textContent = t('footer');
+    $('clearStats').textContent = t('clearStats');
+    $('soundBtn').title = t('soundTitle');
+    $('themeBtn').title = t('themeTitle');
+    $('langBtn').textContent = t('language');
+    document.querySelector('.modes').setAttribute('aria-label', language === 'en' ? 'Timer modes' : 'タイマーモード');
+    document.querySelectorAll('.mode').forEach((b, i) => b.textContent = [t('focus'),t('short'),t('long')][i]);
+    render();
+  }
+
   const CIRC = 2 * Math.PI * 99;
   const today = new Date().toLocaleDateString('sv-SE');
   const defaults = {focus:25, short:5, long:15, goal:120};
@@ -108,47 +195,47 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   } catch(e) {}
   function persist(){try{localStorage.setItem('focusTimerSettings',JSON.stringify(settings));localStorage.setItem('focusTimerData',JSON.stringify(data));localStorage.setItem('focusTimerSound',String(soundOn));localStorage.setItem('focusTimerAlt',String(alternate));}catch(e){}}
   function notify(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2400);}
-  function modeName(m){return m==='focus'?'集中':m==='short'?'短い休憩':'長い休憩';}
+  function modeName(m){return m==='focus'?t('focus'):m==='short'?t('short'):t('long');}
   function modeSeconds(m){return Math.max(1,Number(settings[m])||defaults[m])*60;}
   function render(){
     const mins=Math.floor(remaining/60), secs=remaining%60;
     $('time').textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
-    $('modeCaption').textContent=mode==='focus'?'FOCUS SESSION':mode==='short'?'SHORT BREAK':'LONG BREAK';
-    $('status').textContent=running?'集中中…':remaining===0?'セッション完了！':'準備ができたら始めよう';
-    $('startBtn').textContent=running?'Ⅱ 一時停止':'▶ 再開';
+    $('modeCaption').textContent=mode==='focus'?t('focusCaption'):mode==='short'?t('shortCaption'):t('longCaption');
+    $('status').textContent=running?t('running'):remaining===0?t('complete'):t('ready');
+    $('startBtn').textContent=running?t('pause'):(remaining===duration?t('start'):t('resume'));
     $('progress').style.strokeDasharray=CIRC;
     $('progress').style.strokeDashoffset=CIRC*(1-Math.max(0,remaining)/duration);
     $('progress').style.stroke=mode==='focus'?'var(--accent)':'var(--accent2)';
     document.title=(running?'▶ ':'')+$('time').textContent+' · '+modeName(mode)+' — Focus';
     document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
-    $('totalTime').innerHTML=Math.floor(data.seconds/60)+'<span>分</span>';
-    $('sessions').innerHTML=data.sessions+'<span>回</span>';
-    $('goalLabel').textContent=Math.min(Math.floor(data.seconds/60),settings.goal)+' / '+settings.goal+' 分';
+    $('totalTime').innerHTML=Math.floor(data.seconds/60)+'<span>'+t('minutes')+'</span>';
+    $('sessions').innerHTML=data.sessions+'<span>'+t('times')+'</span>';
+    $('goalLabel').textContent=Math.min(Math.floor(data.seconds/60),settings.goal)+' / '+settings.goal+' '+t('minutes');
     $('goalBar').style.width=Math.min(100,data.seconds/Math.max(1,settings.goal*60)*100)+'%';
     $('todayLabel').textContent=today.replaceAll('-','/');
-    $('soundBtn').textContent=soundOn?'🔔 音 ON':'🔕 音 OFF';
+    $('soundBtn').textContent=soundOn?t('soundOn'):t('soundOff');
     $('soundBtn').setAttribute('aria-pressed',String(soundOn));
     $('themeBtn').textContent=alternate?'◑':'◐';
-    $('taskCurrent').textContent=data.task?'✦ '+data.task:'やることを決めると集中しやすいよ。';
+    $('taskCurrent').textContent=data.task?'✦ '+data.task:t('taskHint');
   }
   function beep(){
     if(!soundOn)return;
     try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=880;gain.gain.value=.12;osc.start();osc.stop(ctx.currentTime+.22);osc.onended=()=>ctx.close();}catch(e){}
-    if('Notification' in window && Notification.permission==='granted') new Notification('Focus Timer',{body:modeName(mode)+'が終わったよ！'});
+    if('Notification' in window && Notification.permission==='granted') new Notification('Focus Timer',{body:modeName(mode)+t('ended')});
   }
   function stopTicker(){if(tickId!==null)clearInterval(tickId);tickId=null;}
   function setMode(next, announce=true){
     running=false;deadline=null;stopTicker();mode=next;duration=modeSeconds(mode);remaining=duration;
-    $('sessionNote').textContent=mode==='focus'?'集中したら、休憩も忘れずに。':mode==='short'?'少し体を伸ばしてリフレッシュしよう。':'長めに休んで、頭をリセットしよう。';
-    render();if(announce)notify(modeName(mode)+'に切り替えたよ');
+    $('sessionNote').textContent=mode==='focus'?t('sessionFocus'):mode==='short'?t('sessionShort'):t('sessionLong');
+    render();if(announce)notify(modeName(mode)+t('switched'));
   }
   function finish(){
     running=false;deadline=null;stopTicker();remaining=0;
     if(mode==='focus'){data.seconds+=duration;data.sessions+=1;}
     persist();render();beep();
-    notify(modeName(mode)+'が終了！');
-    if(mode==='focus') $('sessionNote').textContent='おつかれさま！休憩を取ろう。';
-    else $('sessionNote').textContent='休憩終了。準備ができたら次の集中へ。';
+    notify(modeName(mode)+t('ended'));
+    if(mode==='focus') $('sessionNote').textContent=t('congrats');
+    else $('sessionNote').textContent=t('breakDone');
   }
   function tick(){
     if(!running || deadline===null)return;
@@ -158,12 +245,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     if(remaining<=0)finish();
   }
   function start(){
-    if(running){running=false;deadline=null;stopTicker();render();notify('一時停止したよ');return;}
+    if(running){running=false;deadline=null;stopTicker();render();notify(t('paused'));return;}
     if(remaining<=0)remaining=duration;
     running=true;deadline=Date.now()+remaining*1000;tickId=setInterval(tick,250);render();
     if('Notification' in window && Notification.permission==='default') Notification.requestPermission().catch(()=>{});
   }
-  function reset(){running=false;deadline=null;stopTicker();remaining=duration;render();notify('タイマーをリセットしたよ');}
+  function reset(){running=false;deadline=null;stopTicker();remaining=duration;render();notify(t('timerReset'));}
   document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
   $('startBtn').addEventListener('click',start);
   $('resetBtn').addEventListener('click',reset);
@@ -172,16 +259,22 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     const read=(id,min,max,backup)=>{const v=Number($(id).value);return Number.isFinite(v)?Math.min(max,Math.max(min,Math.round(v))):backup;};
     settings={focus:read('focusMins',1,180,25),short:read('shortMins',1,60,5),long:read('longMins',1,90,15),goal:read('goalMins',10,1440,120)};
     $('focusMins').value=settings.focus;$('shortMins').value=settings.short;$('longMins').value=settings.long;$('goalMins').value=settings.goal;
-    persist();setMode(mode,false);notify('設定を保存したよ');
+    persist();setMode(mode,false);notify(t('settingsSaved'));
   });
-  $('saveTask').addEventListener('click',()=>{data.task=$('taskInput').value.trim();persist();render();notify(data.task?'やることを保存したよ':'やることをクリアしたよ');});
+  $('saveTask').addEventListener('click',()=>{data.task=$('taskInput').value.trim();persist();render();notify(data.task?t('taskSaved'):t('taskCleared'));});
   $('taskInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('saveTask').click();});
+  $('langBtn').addEventListener('click',()=>{
+    language=language==='ja'?'en':'ja';
+    try{localStorage.setItem('focusTimerLanguage',language);}catch(e){}
+    applyLanguage();
+    notify(language==='ja'?'日本語に切り替えたよ':'Language switched to English');
+  });
   $('soundBtn').addEventListener('click',()=>{soundOn=!soundOn;persist();render();});
   $('themeBtn').addEventListener('click',()=>{alternate=!alternate;document.documentElement.style.setProperty('--accent',alternate?'#7ce6d1':'#a99bff');document.documentElement.style.setProperty('--accent2',alternate?'#a99bff':'#7ce6d1');persist();render();});
-  $('clearStats').addEventListener('click',()=>{if(confirm('今日の集中時間とセッション数をリセットする？')){data.seconds=0;data.sessions=0;persist();render();notify('今日の記録をリセットしたよ');}});
+  $('clearStats').addEventListener('click',()=>{if(confirm(t('confirmClear'))){data.seconds=0;data.sessions=0;persist();render();notify(t('statsReset'));}});
   $('focusMins').value=settings.focus;$('shortMins').value=settings.short;$('longMins').value=settings.long;$('goalMins').value=settings.goal;$('taskInput').value=data.task;
   document.documentElement.style.setProperty('--accent',alternate?'#7ce6d1':'#a99bff');document.documentElement.style.setProperty('--accent2',alternate?'#a99bff':'#7ce6d1');
-  duration=modeSeconds(mode);remaining=duration;render();
+  duration=modeSeconds(mode);remaining=duration;applyLanguage();
 })();
 </script>
 </body>
