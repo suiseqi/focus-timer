@@ -36,6 +36,23 @@ main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(270px,.7fr);gap:2
 .chart-container{width:100%;height:160px;position:relative;margin-bottom:12px}
 .chart-container svg{width:100%;height:100%;overflow:visible}
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+
+/* 学習カレンダー・科目履歴 */
+.calendar-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.calendar-head button,.calendar-day{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:10px}
+.calendar-head button{padding:7px 12px}.calendar-month{font-weight:700}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.calendar-weekday{text-align:center;color:var(--muted);font-size:11px;padding:4px 0}
+.calendar-day{min-height:48px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;position:relative}
+.calendar-day:disabled{opacity:.28;cursor:default}.calendar-day.today{border-color:var(--accent)}.calendar-day.selected{outline:2px solid var(--accent);outline-offset:1px}
+.calendar-day .day-mins{font-size:9px;color:var(--accent2)}.calendar-day.level-1{background:#373451}.calendar-day.level-2{background:#514879}.calendar-day.level-3{background:#7565b4}.calendar-day.level-4{background:#a99bff;color:#171522}
+.calendar-detail{margin-top:13px;padding:12px;background:#11131c;border:1px solid var(--border);border-radius:13px;color:var(--muted);font-size:13px}
+.subject-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}.subject-row input{min-width:0;background:#11131c;border:1px solid var(--border);border-radius:11px;padding:10px 12px;color:var(--text)}
+.subject-row button{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:11px;padding:0 13px}
+.subject-select{width:100%;margin-top:9px;background:#11131c;border:1px solid var(--border);border-radius:11px;padding:10px 12px;color:var(--text)}
+.history-list{display:flex;flex-direction:column;gap:8px}.history-item{padding:12px;background:#11131c;border:1px solid var(--border);border-radius:13px;display:flex;justify-content:space-between;gap:12px}.history-item strong{display:block;font-size:13px;overflow-wrap:anywhere}.history-item small{color:var(--muted);font-size:11px}.history-time{white-space:nowrap;color:var(--accent2);font-weight:700;font-size:13px}.empty-history{color:var(--muted);font-size:13px;text-align:center;padding:18px 8px}
+@media(max-width:380px){.calendar-day{min-height:40px}.calendar-day .day-mins{font-size:8px}}
+
 footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:22px;color:#777c94;font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#e8e4ff;color:#1a1730;padding:12px 18px;border-radius:13px;box-shadow:0 10px 40px #0005;transition:.25s;z-index:5;font-weight:650}.toast.show{opacity:1;transform:translate(-50%,0)}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -90,6 +107,17 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       </section>
 
       <section class="card">
+        <h2 class="section-title"><span id="calendarHeadingText">学習カレンダー</span><small id="calendarSubLabel">学習記録</small></h2>
+        <div class="calendar-head"><button type="button" id="calendarPrev" aria-label="前の月">‹</button><span class="calendar-month" id="calendarMonth"></span><button type="button" id="calendarNext" aria-label="次の月">›</button></div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="calendar-detail" id="calendarDetail" aria-live="polite"></div>
+      </section>
+      <section class="card">
+        <h2 class="section-title"><span id="historyHeadingText">学習履歴</span><small id="historyCountLabel">最新の記録</small></h2>
+        <div class="history-list" id="historyList"></div>
+      </section>
+
+      <section class="card">
         <h2 class="section-title"><span id="settingsHeadingText">タイマー設定</span> <small id="perMinuteLabel">分単位</small></h2>
         <div class="settings-grid">
           <div class="field"><label for="focusMins" id="focusLabel">集中時間</label><input id="focusMins" type="number" min="1" max="180" value="25"></div>
@@ -102,6 +130,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <section class="card">
         <h2 class="section-title"><span id="taskHeadingText">今やること</span> <small id="optionalLabel">任意</small></h2>
         <div class="tasks"><input id="taskInput" maxlength="100" placeholder="例：情報技術検定の勉強" aria-label="今やること"><button id="saveTask">保存</button></div>
+        <select class="subject-select" id="subjectSelect" aria-label="科目"></select>
+        <div class="subject-row"><input id="subjectInput" maxlength="40" placeholder="科目を追加（例：Linux）"><button id="addSubject">追加</button></div>
         <div class="task-current" id="taskCurrent">やることを決めると集中しやすいよ。</div>
       </section>
     </aside>
@@ -137,6 +167,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       confirmClear:'今日の集中時間とセッション数をリセットする？', language:'日本語 / EN',
       weeklyHeading:'週間統計', tabBar:'棒グラフ', tabLine:'折れ線グラフ',
       weeklyTotal:'7日間の合計', weeklyAvg:'1日あたりの平均',
+      calendarHeading:'学習カレンダー', calendarSub:'学習記録', historyHeading:'学習履歴', historyCount:'最新の記録', subjectPlaceholder:'科目を追加（例：Linux）', addSubject:'追加', noHistory:'まだ学習履歴がありません。', selectedDay:'選択した日の学習時間', noStudy:'この日の学習記録はありません。', subjectNone:'科目なし',
       weekDaysJa:['日','月','火','水','木','金','土']
     },
     en: {
@@ -161,6 +192,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       confirmClear:"Reset today's focus time and completed sessions?", language:'EN / 日本語',
       weeklyHeading:'Weekly Stats', tabBar:'Bar Chart', tabLine:'Line Chart',
       weeklyTotal:'7-Day Total', weeklyAvg:'Daily Average',
+      calendarHeading:'Study Calendar', calendarSub:'Activity', historyHeading:'Study History', historyCount:'Recent sessions', subjectPlaceholder:'Add subject (e.g. Linux)', addSubject:'Add', noHistory:'No study sessions yet.', selectedDay:'Study time on selected day', noStudy:'No study records for this day.', subjectNone:'No subject',
       weekDaysEn:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
     }
   };
@@ -187,6 +219,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     $('tabLineBtn').textContent = t('tabLine');
     $('weeklyTotalLabel').textContent = t('weeklyTotal');
     $('weeklyAvgLabel').textContent = t('weeklyAvg');
+    $('calendarHeadingText').textContent = t('calendarHeading');
+    $('calendarSubLabel').textContent = t('calendarSub');
+    $('historyHeadingText').textContent = t('historyHeading');
+    $('historyCountLabel').textContent = t('historyCount');
+    $('subjectInput').placeholder = t('subjectPlaceholder');
+    $('addSubject').textContent = t('addSubject');
     $('settingsHeadingText').textContent = t('settings');
     $('perMinuteLabel').textContent = t('perMinute');
     $('focusLabel').textContent = t('focusDuration');
@@ -218,12 +256,20 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   let chartType = 'bar';
   let data = {date:today, seconds:0, sessions:0, task:''};
   let historyData = {};
+  let subjects = [];
+  let sessionHistory = [];
+  let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let selectedCalendarDate = today;
 
   let toastTimer;
   try {
     const saved = JSON.parse(localStorage.getItem('focusTimerSettings') || 'null');
     if(saved) settings = {...defaults,...saved};
     
+    subjects = JSON.parse(localStorage.getItem('focusTimerSubjects') || '[]');
+    if(!Array.isArray(subjects)) subjects = [];
+    sessionHistory = JSON.parse(localStorage.getItem('focusTimerSessions') || '[]');
+    if(!Array.isArray(sessionHistory)) sessionHistory = [];
     const storedHistory = JSON.parse(localStorage.getItem('focusTimerHistory') || 'null');
     if(storedHistory && typeof storedHistory === 'object') {
       historyData = storedHistory;
@@ -259,6 +305,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       localStorage.setItem('focusTimerSettings', JSON.stringify(settings));
       localStorage.setItem('focusTimerData', JSON.stringify(data));
       localStorage.setItem('focusTimerHistory', JSON.stringify(historyData));
+      localStorage.setItem('focusTimerSubjects', JSON.stringify(subjects));
+      localStorage.setItem('focusTimerSessions', JSON.stringify(sessionHistory));
       localStorage.setItem('focusTimerSound', String(soundOn));
       localStorage.setItem('focusTimerAlt', String(alternate));
       localStorage.setItem('focusTimerChartType', chartType);
@@ -435,6 +483,47 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     container.appendChild(svg);
   }
 
+  function renderSubjects(){
+    const select=$('subjectSelect');
+    const current=data.subject||'';
+    select.innerHTML='';
+    const none=document.createElement('option');none.value='';none.textContent=t('subjectNone');select.appendChild(none);
+    subjects.forEach(subject=>{const option=document.createElement('option');option.value=subject;option.textContent=subject;select.appendChild(option);});
+    select.value=subjects.includes(current)?current:'';
+  }
+  function renderCalendar(){
+    const grid=$('calendarGrid');grid.innerHTML='';
+    const year=calendarMonth.getFullYear(),month=calendarMonth.getMonth();
+    $('calendarMonth').textContent=calendarMonth.toLocaleDateString(language==='ja'?'ja-JP':'en-US',{year:'numeric',month:'long'});
+    const labels=language==='ja'?['日','月','火','水','木','金','土']:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    labels.forEach(label=>{const el=document.createElement('div');el.className='calendar-weekday';el.textContent=label;grid.appendChild(el);});
+    const first=new Date(year,month,1).getDay(),last=new Date(year,month+1,0).getDate();
+    for(let i=0;i<first;i++){const blank=document.createElement('div');grid.appendChild(blank);}
+    const todayStr=getTodayStr();
+    for(let day=1;day<=last;day++){
+      const date=new Date(year,month,day);const key=date.toLocaleDateString('sv-SE');
+      const rec=key===today?{seconds:data.seconds}:historyData[key];const mins=Math.floor((rec?.seconds||0)/60);
+      const btn=document.createElement('button');btn.type='button';btn.className='calendar-day';
+      if(key===todayStr)btn.classList.add('today');if(key===selectedCalendarDate)btn.classList.add('selected');
+      const level=mins>=240?4:mins>=120?3:mins>=60?2:mins>0?1:0;if(level)btn.classList.add('level-'+level);
+      btn.innerHTML='<span>'+day+'</span>'+(mins?'<span class="day-mins">'+mins+'m</span>':'');
+      btn.addEventListener('click',()=>{selectedCalendarDate=key;renderCalendar();renderCalendarDetail();});grid.appendChild(btn);
+    }
+    renderCalendarDetail();
+  }
+  function renderCalendarDetail(){
+    const rec=selectedCalendarDate===today?{seconds:data.seconds}:historyData[selectedCalendarDate];
+    const mins=Math.floor((rec?.seconds||0)/60);
+    const dateLabel=new Date(selectedCalendarDate+'T00:00:00').toLocaleDateString(language==='ja'?'ja-JP':'en-US',{year:'numeric',month:'short',day:'numeric'});
+    $('calendarDetail').textContent=dateLabel+' · '+t('selectedDay')+': '+mins+' '+t('minutes')+(mins===0?' · '+t('noStudy'):'');
+  }
+  function renderHistory(){
+    const list=$('historyList');list.innerHTML='';
+    const recent=sessionHistory.slice(-12).reverse();
+    if(!recent.length){list.innerHTML='<div class="empty-history">'+t('noHistory')+'</div>';return;}
+    recent.forEach(item=>{const row=document.createElement('div');row.className='history-item';const left=document.createElement('div');const title=document.createElement('strong');title.textContent=item.task||modeName('focus');const meta=document.createElement('small');meta.textContent=[item.subject||t('subjectNone'),item.date].join(' · ');left.append(title,meta);const time=document.createElement('div');time.className='history-time';time.textContent=Math.round(item.seconds/60)+' '+t('minutes');row.append(left,time);list.appendChild(row);});
+  }
+
   function render(){
     checkDateChange();
     const mins=Math.floor(remaining/60), secs=remaining%60;
@@ -462,6 +551,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     $('tabBarBtn').classList.toggle('active', chartType === 'bar');
     $('tabLineBtn').classList.toggle('active', chartType === 'line');
     renderChart();
+    renderSubjects();
+    renderCalendar();
+    renderHistory();
   }
 
   function beep(){
@@ -477,7 +569,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   }
   function finish(){
     running=false;deadline=null;stopTicker();remaining=0;
-    if(mode==='focus'){data.seconds+=duration;data.sessions+=1;}
+    if(mode==='focus'){data.sessions+=1;sessionHistory.push({date:getTodayStr(),task:data.task||'',subject:data.subject||'',seconds:duration,completedAt:Date.now()});}
     persist();render();beep();
     notify(modeName(mode)+t('ended'));
     if(mode==='focus') $('sessionNote').textContent=t('congrats');
@@ -514,6 +606,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     persist();setMode(mode,false);notify(t('settingsSaved'));
   });
   $('saveTask').addEventListener('click',()=>{data.task=$('taskInput').value.trim();persist();render();notify(data.task?t('taskSaved'):t('taskCleared'));});
+  $('subjectSelect').addEventListener('change',()=>{data.subject=$('subjectSelect').value;persist();render();});
+  $('addSubject').addEventListener('click',()=>{const value=$('subjectInput').value.trim();if(!value)return;if(!subjects.includes(value))subjects.push(value);data.subject=value;$('subjectInput').value='';persist();render();notify(value);});
+  $('subjectInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('addSubject').click();});
+  $('calendarPrev').addEventListener('click',()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);renderCalendar();});
+  $('calendarNext').addEventListener('click',()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);renderCalendar();});
   $('taskInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('saveTask').click();});
   $('langBtn').addEventListener('click',()=>{
     language=language==='ja'?'en':'ja';
